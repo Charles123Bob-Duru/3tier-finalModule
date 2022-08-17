@@ -1,12 +1,12 @@
 
 terraform {
-  required_version = ">1.1"
+  required_version = ">=1.1"
 
   backend "s3" {
-    bucket         = "kojitech.3.tier.arch.jnj"
-    dynamodb_table = "terraform-state-block"
+    bucket         = "kojitechs.aws.eks.with.terraform.tf"
+    dynamodb_table = "terraform-lock"
     region         = "us-east-1"
-    key            = "path/env"
+    key            = "path/env/3-tier"
     encrypt        = true
   }
   required_providers {
@@ -18,8 +18,7 @@ terraform {
 }
 
 provider "aws" {
-  region  = "us-east-1"
-  profile = "Charles"
+  region = "us-east-1"
 }
 
 locals {
@@ -30,7 +29,6 @@ locals {
 data "aws_availability_zones" "available" {
   state = "available"
 }
-
 
 # Creating vpc
 resource "aws_vpc" "kojitechs_vpc" {
@@ -52,6 +50,8 @@ resource "aws_internet_gateway" "gw" {
   }
 }
 
+# aws_internet_gateway.gw.id
+
 #  Creating public subnets
 resource "aws_subnet" "public_subnet" {
   count = length(var.public_cidr) # telling terraform calculate the size of public_cidr var
@@ -65,6 +65,7 @@ resource "aws_subnet" "public_subnet" {
     Name = "public_subnet_${count.index + 1}"
   }
 }
+
 
 # private subnet 
 resource "aws_subnet" "private_subnet" {
@@ -92,3 +93,54 @@ resource "aws_subnet" "datebase_subnet" {
   }
 }
 
+# creating pulic route table 
+resource "aws_route_table" "public_route_table" {
+  vpc_id = local.vpc_id
+
+  route {
+    cidr_block = "0.0.0.0/0"
+    gateway_id = aws_internet_gateway.gw.id
+  }
+
+  tags = {
+    Name = "public_route_table"
+  }
+}
+
+# CREATING A ROUTE TABLE ASSOCIATION FOR PULIC SUBNET 
+resource "aws_route_table_association" "public_association" {
+  count = length(var.public_cidr)
+
+  subnet_id      = aws_subnet.public_subnet[count.index].id
+  route_table_id = aws_route_table.public_route_table.id
+}
+
+# creating deafult route table
+resource "aws_default_route_table" "default_route_table" {
+  default_route_table_id = aws_vpc.kojitechs_vpc.default_route_table_id
+
+  route {
+    cidr_block = "0.0.0.0/0"
+    gateway_id = aws_nat_gateway.nat.id 
+  }
+}
+
+
+# CREATING A NATWAY
+resource "aws_nat_gateway" "nat" {
+  allocation_id = aws_eip.eip.id # it wouldn't make sense to have a dynamic address on a NAT device
+  subnet_id     = aws_subnet.public_subnet[0].id # pulic subnet!! 
+
+  tags = {
+    Name = "gw NAT"
+  }
+
+  depends_on = [aws_internet_gateway.gw]
+}
+
+# EIP
+resource "aws_eip" "eip" {
+  
+  vpc      = true
+  depends_on = [aws_internet_gateway.gw]
+}
