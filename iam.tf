@@ -21,7 +21,6 @@ resource "aws_iam_role" "ssm_fleet_ec2" {
   }
 }
 
-# To reference this to ec2 we have to pass ===> aws_iam_instance_profile.instance_profile.name
 resource "aws_iam_instance_profile" "instance_profile" {
   name = "registrion_profile"
   role = aws_iam_role.ssm_fleet_ec2.name

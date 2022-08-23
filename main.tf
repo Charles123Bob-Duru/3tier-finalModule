@@ -54,7 +54,7 @@ resource "aws_internet_gateway" "gw" {
 
 #  Creating public subnets
 resource "aws_subnet" "public_subnet" {
-  count = length(var.public_cidr) # telling terraform calculate the size of public_cidr var
+  count = length(var.public_cidr)
 
   vpc_id                  = local.vpc_id
   cidr_block              = var.public_cidr[count.index]
@@ -69,7 +69,7 @@ resource "aws_subnet" "public_subnet" {
 
 # private subnet 
 resource "aws_subnet" "private_subnet" {
-  count = length(var.private_cidr) # telling terraform calculate the size of public_cidr var
+  count = length(var.private_cidr)
 
   vpc_id            = local.vpc_id
   cidr_block        = var.private_cidr[count.index]
@@ -82,7 +82,7 @@ resource "aws_subnet" "private_subnet" {
 
 # database subnet
 resource "aws_subnet" "datebase_subnet" {
-  count = length(var.database_cidr) # telling terraform calculate the size of public_cidr var
+  count = length(var.database_cidr)
 
   vpc_id            = local.vpc_id
   cidr_block        = var.database_cidr[count.index]
@@ -115,21 +115,19 @@ resource "aws_route_table_association" "public_association" {
   route_table_id = aws_route_table.public_route_table.id
 }
 
-# creating deafult route table
 resource "aws_default_route_table" "default_route_table" {
   default_route_table_id = aws_vpc.kojitechs_vpc.default_route_table_id
 
   route {
     cidr_block = "0.0.0.0/0"
-    gateway_id = aws_nat_gateway.nat.id 
+    gateway_id = aws_nat_gateway.nat.id
   }
 }
 
 
-# CREATING A NATWAY
 resource "aws_nat_gateway" "nat" {
-  allocation_id = aws_eip.eip.id # it wouldn't make sense to have a dynamic address on a NAT device
-  subnet_id     = aws_subnet.public_subnet[0].id # pulic subnet!! 
+  allocation_id = aws_eip.eip.id
+  subnet_id     = aws_subnet.public_subnet[0].id
 
   tags = {
     Name = "gw NAT"
@@ -140,7 +138,7 @@ resource "aws_nat_gateway" "nat" {
 
 # EIP
 resource "aws_eip" "eip" {
-  
-  vpc      = true
+
+  vpc        = true
   depends_on = [aws_internet_gateway.gw]
 }

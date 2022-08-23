@@ -23,3 +23,8 @@ variable "database_cidr" {
   default     = ["10.0.51.0/24", "10.0.55.0/24"]
 }
 # 
+
+
+variable "component_name" {
+  default = "kojitechs-register"
+}
