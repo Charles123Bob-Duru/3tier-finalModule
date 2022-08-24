@@ -1,8 +1,6 @@
-# alb 
 # Terraform AWS Application Load Balancer (ALB)*
-
 data "aws_route53_zone" "mydomain" {
-  name         = "kojitechs.com"
+  name = "kojitechs.com"
 }
 
 module "alb" {
@@ -12,7 +10,7 @@ module "alb" {
   name               = "${var.component_name}-alb" # string casting
   load_balancer_type = "application"
   vpc_id             = local.vpc_id
-  subnets            = slice(aws_subnet.public_subnet[*].id, 0,2)
+  subnets            = slice(aws_subnet.public_subnet[*].id, 0, 2)
 
   security_groups = [aws_security_group.alb_sg.id]
 
@@ -94,7 +92,7 @@ module "alb" {
       }
 
     },
-   # App3 Target Group - TG Index = 2
+    # App3 Target Group - TG Index = 2
     {
       name_prefix          = "app3-"
       backend_protocol     = "HTTP"
@@ -120,11 +118,11 @@ module "alb" {
       protocol_version = "HTTP1"
       targets = {
         my_app3_vm1 = {
-          target_id = aws_instance.app2.id
+          target_id = aws_instance.registration_app[0].id
           port      = 8080
         },
         my_app3_vm2 = {
-          target_id = aws_instance.app2.id
+          target_id = aws_instance.registration_app[1].id
           port      = 8080
         }
       }

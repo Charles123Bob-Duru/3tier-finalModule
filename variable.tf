@@ -8,7 +8,7 @@ variable "vpc_cidr" {
 variable "public_cidr" {
   description = "cidr for public subnet"
   type        = list(any)
-  default     = ["10.0.0.0/24", "10.0.2.0/24"]
+  default     = ["10.0.0.0/24", "10.0.2.0/24", "10.0.4.0/24"]
 }
 # 
 variable "private_cidr" {
@@ -26,5 +26,11 @@ variable "database_cidr" {
 
 
 variable "component_name" {
-  default = "kojitechs-register"
+  default = "kojitechs"
+}
+
+variable "tag_name" {
+  type        = list(any)
+  description = "(optional) describe your variable"
+  default     = ["RegistationAPP_A", "RegistrationAPP_B"]
 }
