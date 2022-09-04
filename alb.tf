@@ -1,6 +1,6 @@
 # Terraform AWS Application Load Balancer (ALB)*
 data "aws_route53_zone" "mydomain" {
-  name = "kojitechs.com"
+  name = "yourdaddy.click"
 }
 
 module "alb" {
@@ -10,7 +10,7 @@ module "alb" {
   name               = "${var.component_name}-alb" # string casting
   load_balancer_type = "application"
   vpc_id             = local.vpc_id
-  subnets            = slice(aws_subnet.public_subnet[*].id, 0, 2)
+  subnets            = slice(local.pub_subnet_id, 0, 2)
 
   security_groups = [aws_security_group.alb_sg.id]
 
@@ -191,7 +191,7 @@ module "alb" {
 
 resource "aws_route53_record" "www" {
   zone_id = data.aws_route53_zone.mydomain.zone_id
-  name    = "kojitechs.com"
+  name    = "yourdaddy.click"
   type    = "A"
 
   alias {
@@ -207,5 +207,5 @@ module "acm" {
 
   domain_name               = trimsuffix(data.aws_route53_zone.mydomain.name, ".")
   zone_id                   = data.aws_route53_zone.mydomain.zone_id
-  subject_alternative_names = ["*.kojitechs.com"]
+  subject_alternative_names = ["*.yourdaddy.click"]
 }

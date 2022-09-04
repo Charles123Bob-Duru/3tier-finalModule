@@ -1,18 +1,18 @@
 
 terraform {
-  required_version = ">=1.1"
+  required_version = "~>1.1.7"
 
   backend "s3" {
-    bucket         = "kojitechs.aws.eks.with.terraform.tf"
-    dynamodb_table = "terraform-lock"
+    bucket         = "kojitech.3.tier.arch.jnj" # 
+    dynamodb_table = "terraform-state-block"    # 
     region         = "us-east-1"
-    key            = "path/env/3-tier"
+    key            = "path/env/kojitechs-3-tier"
     encrypt        = true
   }
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = "~> 3.0"
+      version = "~> 4.0"
     }
   }
 }
@@ -22,123 +22,20 @@ provider "aws" {
 }
 
 locals {
-  vpc_id = aws_vpc.kojitechs_vpc.id
-  azs    = data.aws_availability_zones.available.names
+  vpc_id             = module.vpc.vpc_id 
+  pub_subnet_id      = module.vpc.pub_subnetid
+  private_subnet_id  = module.vpc.private_subnetid
+  database_subnet_id = module.vpc.database_subnetid
 }
 
-data "aws_availability_zones" "available" {
-  state = "available"
-}
+module "vpc" {
+  source = "git::https://github.com/Charles123Bob-Duru/kojitechs-vpc-module.git?ref=v1.1.0"
 
-# Creating vpc
-resource "aws_vpc" "kojitechs_vpc" {
-  cidr_block           = var.vpc_cidr
-  enable_dns_hostnames = true
-  enable_dns_support   = true
-
-  tags = {
-    Name = "kojitechs_vpc"
+  vpc_tags = {
+    Name = "Kojitechs_vpc"
   }
-}
-
-# Creating internet gateway
-resource "aws_internet_gateway" "gw" {
-  vpc_id = local.vpc_id
-
-  tags = {
-    Name = "gw"
-  }
-}
-
-# aws_internet_gateway.gw.id
-
-#  Creating public subnets
-resource "aws_subnet" "public_subnet" {
-  count = length(var.public_cidr)
-
-  vpc_id                  = local.vpc_id
-  cidr_block              = var.public_cidr[count.index]
-  availability_zone       = element(slice(local.azs, 0, 2), count.index) # 
-  map_public_ip_on_launch = true
-
-  tags = {
-    Name = "public_subnet_${count.index + 1}"
-  }
-}
-
-
-# private subnet 
-resource "aws_subnet" "private_subnet" {
-  count = length(var.private_cidr)
-
-  vpc_id            = local.vpc_id
-  cidr_block        = var.private_cidr[count.index]
-  availability_zone = element(slice(local.azs, 0, 2), count.index) # 
-
-  tags = {
-    Name = "private_subnet_${count.index + 1}"
-  }
-}
-
-# database subnet
-resource "aws_subnet" "datebase_subnet" {
-  count = length(var.database_cidr)
-
-  vpc_id            = local.vpc_id
-  cidr_block        = var.database_cidr[count.index]
-  availability_zone = element(slice(local.azs, 0, 2), count.index) # 
-
-  tags = {
-    Name = "database_subnet_${count.index + 1}"
-  }
-}
-
-# creating pulic route table 
-resource "aws_route_table" "public_route_table" {
-  vpc_id = local.vpc_id
-
-  route {
-    cidr_block = "0.0.0.0/0"
-    gateway_id = aws_internet_gateway.gw.id
-  }
-
-  tags = {
-    Name = "public_route_table"
-  }
-}
-
-# CREATING A ROUTE TABLE ASSOCIATION FOR PULIC SUBNET 
-resource "aws_route_table_association" "public_association" {
-  count = length(var.public_cidr)
-
-  subnet_id      = aws_subnet.public_subnet[count.index].id
-  route_table_id = aws_route_table.public_route_table.id
-}
-
-resource "aws_default_route_table" "default_route_table" {
-  default_route_table_id = aws_vpc.kojitechs_vpc.default_route_table_id
-
-  route {
-    cidr_block = "0.0.0.0/0"
-    gateway_id = aws_nat_gateway.nat.id
-  }
-}
-
-
-resource "aws_nat_gateway" "nat" {
-  allocation_id = aws_eip.eip.id
-  subnet_id     = aws_subnet.public_subnet[0].id
-
-  tags = {
-    Name = "gw NAT"
-  }
-
-  depends_on = [aws_internet_gateway.gw]
-}
-
-# EIP
-resource "aws_eip" "eip" {
-
-  vpc        = true
-  depends_on = [aws_internet_gateway.gw]
+  vpc_cidr      = "10.0.0.0/16"
+  public_cidr   = ["10.0.0.0/24", "10.0.2.0/24", "10.0.4.0/24"]
+  private_cidr  = ["10.0.1.0/24", "10.0.3.0/24"]
+  database_cidr = ["10.0.5.0/24", "10.0.7.0/24"]
 }

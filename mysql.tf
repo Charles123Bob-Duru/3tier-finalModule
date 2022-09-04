@@ -24,7 +24,7 @@ module "aurora" {
   vpc_security_group_ids = [aws_security_group.database_sg.id]
   create_db_subnet_group = true
   create_security_group  = false
-  subnets                = slice(aws_subnet.datebase_subnet[*].id, 0, 2)
+  subnets                = local.database_subnet_id
 
   iam_database_authentication_enabled = true
   create_random_password              = false
