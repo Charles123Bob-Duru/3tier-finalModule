@@ -191,7 +191,7 @@ module "alb" {
 
 resource "aws_route53_record" "www" {
   zone_id = data.aws_route53_zone.mydomain.zone_id
-  name    = "yourdaddy.click"
+  name    = "www.yourdaddy.click"
   type    = "A"
 
   alias {
@@ -207,5 +207,5 @@ module "acm" {
 
   domain_name               = trimsuffix(data.aws_route53_zone.mydomain.name, ".")
   zone_id                   = data.aws_route53_zone.mydomain.zone_id
-  subject_alternative_names = ["*.yourdaddy.click"]
+  subject_alternative_names = ["*.yourdaddy.click"] 
 }
