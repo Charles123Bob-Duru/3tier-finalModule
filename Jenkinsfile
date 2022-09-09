@@ -1,4 +1,3 @@
-
 pipeline {
         agent any
     
@@ -6,7 +5,6 @@ pipeline {
         choice(name: 'ENVIRONMENT', choices: ['', 'prod', 'dev', 'sbx'], description: "SELECT THE ACCOUNT YOU'D LIKE TO DEPLOY TO.")
         choice(name: 'ACTION', choices: ['', 'apply', 'destroy'], description: 'Select action, BECAREFUL IF YOU SELECT DESTROY TO PROD')
     }
-
     stages{    
         stage('Git checkout') {
             steps{
@@ -35,11 +33,12 @@ pipeline {
                         echo "Error occurred: ${e.getMessage()}"
                         sh """
                             terraform workspace new ${params.ENVIRONMENT}
+                            terraform workspace select ${params.ENVIRONMENT}
                         """
                     }
     
                 }
-            }
+        }
     }
         stage('Terraform plan'){
             steps {
